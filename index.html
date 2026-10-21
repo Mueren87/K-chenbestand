@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Küchenbestand</title>
+<meta name="theme-color" content="#2e6a3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Küche">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#edf1ec; --surface:#fbfcfa; --ink:#18221b; --muted:#5d6b61; --line:#d3dbd3;
+  --accent:#2e6a3e; --accent-ink:#fff; --accent-soft:#dbe8dc;
+  --warn:#a86a08; --warn-soft:#f6e8cc; --crit:#b13d2c; --crit-soft:#f5dcd6;
+  --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:12px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121815; --surface:#1a221d; --ink:#e4ebe5; --muted:#93a198; --line:#2c3730;
+  --accent:#7cc08d; --accent-ink:#0e1a12; --accent-soft:#223a29;
+  --warn:#e2b155; --warn-soft:#3a2f17; --crit:#ec8a78; --crit-soft:#3d221d; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:16px;line-height:1.45;padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px));-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:680px;margin:0 auto}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:18px 10px;display:grid;gap:12px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--f-display);font-weight:800;font-size:1.9rem;letter-spacing:-.02em;margin:0}
+.stats{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);display:flex;gap:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink)} .stats .low b{color:var(--warn)}
+.iconbtn{font:inherit;background:none;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.85rem}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chip{font:inherit;font-size:.86rem;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;white-space:nowrap;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.group{margin-top:18px}
+.group h2{font-family:var(--f-display);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 6px;display:flex;justify-content:space-between}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.row{display:grid;grid-template-columns:6px 1fr auto;align-items:center;gap:12px;padding:10px 10px 10px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.stripe{align-self:stretch}
+.row.low .stripe{background:var(--warn)} .row.out .stripe{background:var(--crit)}
+.info{min-width:0;cursor:pointer;background:none;border:0;color:inherit;font:inherit;text-align:left;padding:4px 0}
+.name{font-weight:700;overflow-wrap:anywhere}
+.meta{font-size:.8rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.code{font-family:var(--f-mono);font-size:.72rem}
+.pill{font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px}
+.pill.low,.pill.soon{background:var(--warn-soft);color:var(--warn)} .pill.out,.pill.expired{background:var(--crit-soft);color:var(--crit)}
+.stepper{display:flex;align-items:center;gap:2px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:700 1.25rem/1 var(--f-mono);cursor:pointer;touch-action:manipulation}
+.stepper button:active{transform:scale(.94)}
+.qty{min-width:58px;text-align:center;font-family:var(--f-mono);font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.qty small{display:block;font-size:.66rem;font-weight:500;color:var(--muted)}
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}
+.alert{margin-top:14px;border:1px solid var(--warn);background:var(--warn-soft);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.alert.crit{border-color:var(--crit);background:var(--crit-soft)}
+.alert h2{font-family:var(--f-display);font-weight:800;font-size:1.05rem;margin:0}
+.alert ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.alert li button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:12px;width:100%;font-size:.94rem}
+.alert .when{font-family:var(--f-mono);font-size:.8rem;font-weight:700;white-space:nowrap}
+.alert .when.expired{color:var(--crit)} .alert .when.soon{color:var(--warn)}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(transparent,var(--bg) 35%)}
+.dock .inner{max-width:680px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.btn{font:700 1rem var(--f-body);border-radius:12px;padding:14px 16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--crit)}
+.bars{display:inline-flex;gap:2px;height:16px;align-items:stretch}
+.bars i{display:block;background:currentColor;width:2px}.bars i:nth-child(2n){width:1px}.bars i:nth-child(3n){width:3px}
+.scrim{position:fixed;inset:0;background:rgba(10,16,12,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:20px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));max-height:92%;overflow-y:auto;display:grid;gap:14px}
+.sheet h3{font-family:var(--f-display);font-weight:800;font-size:1.35rem;margin:0}
+.field{display:grid;gap:5px}
+.field label{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.actions .btn{flex:1}
+.note{font-size:.9rem;color:var(--muted);margin:0}
+.big-step{display:flex;align-items:center;justify-content:center;gap:16px;padding:6px 0}
+.big-step button{width:64px;height:64px;font-size:1.8rem;border-radius:16px}
+.big-step .qty{font-size:2rem;min-width:110px}
+.status{display:flex;gap:10px;align-items:center;font-size:.92rem;padding:10px 12px;border-radius:10px;background:var(--accent-soft)}
+.status.err{background:var(--crit-soft);color:var(--crit)}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(1turn)}}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;z-index:40;max-width:calc(100% - 32px)}
+.sync{font-family:var(--f-mono);font-size:.7rem;color:var(--muted);margin-top:16px}
+/* scanner */
+.scanner{position:fixed;inset:0;z-index:30;background:#000;display:flex;flex-direction:column}
+.scanner video{flex:1;width:100%;object-fit:cover;min-height:0}
+.scanner .frame{position:absolute;left:10%;right:10%;top:35%;height:22%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);pointer-events:none}
+.scanner .frame::after{content:"";position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff5a4a;animation:scanline 1.6s ease-in-out infinite alternate}
+@keyframes scanline{from{transform:translateY(-30px)}to{transform:translateY(30px)}}
+.scanner .bar{position:absolute;left:0;right:0;bottom:0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.8) 30%)}
+.scanner .hint{color:#fff;text-align:center;font-size:.95rem;margin:0}
+.scanner .manual{display:flex;gap:8px}
+.scanner .manual input{background:#fff;color:#111;border-color:#fff}
+.scanner .manual button,.scanner .close{background:#fff;color:#111;border:0}
+.code-big{font-family:var(--f-mono);letter-spacing:.06em}
+.setup{margin-top:24px;display:grid;gap:14px}
+.setup .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px}
+.setup h2{font-family:var(--f-display);font-weight:800;margin:0;font-size:1.3rem}
+.share{word-break:break-all;font-family:var(--f-mono);font-size:.78rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;user-select:all}
+@media (max-width:420px){.three{grid-template-columns:1fr 1fr}.three .field:last-child{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.spin,.scanner .frame::after{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Küchenbestand</h1>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="stats" id="stats"></div>
+        <button class="iconbtn" id="menuBtn" aria-label="Einstellungen">⋯</button>
+      </div>
+    </div>
+    <input id="q" type="search" placeholder="Artikel oder Barcode suchen" autocomplete="off">
+    <div class="chips" id="chips" role="toolbar" aria-label="Filter"></div>
+  </header>
+  <main id="main"></main>
+  <p class="sync" id="sync"></p>
+</div>
+
+<div class="dock" id="dock"><div class="inner">
+  <button class="btn primary" id="scanBtn"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>Barcode scannen</button>
+  <button class="btn" id="addBtn">+ Artikel</button>
+</div></div>
+<div id="layer"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js"></script>
+<script>
+"use strict";
+const CFG=window.KB_CONFIG||{};
+const WARN_DAYS=Number(CFG.WARN_DAYS)||7;
+const PLACES=["Vorratsschrank","Kühlschrank","Tiefkühler","Gewürze","Getränke","Sonstiges"];
+const UNITS=["Stück","Packung","Dose","Glas","Flasche","Beutel","kg","g","l"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS_KEY="kb_household", LS_CACHE="kb_cache";
+let sb=null, household=null, items=[], filter="Alle", q="";
+
+/* ---------- Haushalt / Verbindung ---------- */
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+function readHouseholdFromUrl(){
+  const m=location.hash.match(/k=([A-Za-z0-9_-]{20,})/);
+  if(m){ls(LS_KEY,m[1]);history.replaceState(null,"",location.pathname+location.search)}
+}
+function randomKey(){const a=new Uint8Array(18);crypto.getRandomValues(a);return btoa(String.fromCharCode(...a)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function shareLink(){return location.origin+location.pathname+"#k="+household}
+function configured(){return CFG.SUPABASE_URL&&!CFG.SUPABASE_URL.includes("DEIN-PROJEKT")&&CFG.SUPABASE_KEY&&!CFG.SUPABASE_KEY.startsWith("DEIN-")}
+function connect(){
+  sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_KEY,{
+    auth:{persistSession:false,autoRefreshToken:false},
+    global:{headers:{"x-household":household}}
+  });
+}
+
+/* ---------- Daten ---------- */
+const fromRow=r=>({id:r.id,name:r.name,barcode:r.barcode||"",qty:Number(r.qty)||0,unit:r.unit||"Stück",min:Number(r.min)||0,place:r.place||"Sonstiges",mhd:r.mhd||""});
+function cache(){ls(LS_CACHE,JSON.stringify({household,items}))}
+function loadCache(){try{const c=JSON.parse(ls(LS_CACHE)||"null");if(c&&c.household===household)items=c.items||[]}catch(e){}}
+let loading=false;
+async function refresh(){
+  if(!sb||loading)return;loading=true;
+  const {data,error}=await sb.from("items").select("*").order("name");
+  loading=false;
+  if(error){setSync("Keine Verbindung – zeige gespeicherten Stand",true);return}
+  items=data.map(fromRow);cache();render();
+  setSync("Synchronisiert "+new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}));
+}
+function setSync(t){$("#sync").textContent=t}
+async function saveItem(it,isNew){
+  const row={household,name:it.name,barcode:it.barcode,qty:it.qty,unit:it.unit,min:it.min,place:it.place,mhd:it.mhd||null,updated_at:new Date().toISOString()};
+  const res=isNew?await sb.from("items").insert(row).select().single():await sb.from("items").update(row).eq("id",it.id).select().single();
+  if(res.error){toast("Speichern fehlgeschlagen. Internetverbindung prüfen.");return null}
+  const saved=fromRow(res.data);
+  const i=items.findIndex(x=>x.id===saved.id);if(i>=0)items[i]=saved;else items.push(saved);
+  cache();render();return saved;
+}
+async function deleteItem(id){
+  const {error}=await sb.from("items").delete().eq("id",id);
+  if(error){toast("Löschen fehlgeschlagen");return}
+  items=items.filter(x=>x.id!==id);cache();render();toast("Gelöscht");
+}
+const pending={};
+function bump(id,d){
+  const it=items.find(x=>x.id===id);if(!it)return;
+  it.qty=Math.max(0,Math.round((it.qty+d)*100)/100);render();
+  pending[id]=(pending[id]||0)+d;
+  clearTimeout(pending["t"+id]);
+  pending["t"+id]=setTimeout(async()=>{
+    const delta=pending[id];pending[id]=0;if(!delta)return;
+    const {data,error}=await sb.rpc("adjust_qty",{p_id:id,p_delta:delta});
+    if(error){toast("Änderung nicht gespeichert. Internetverbindung prüfen.");refresh();return}
+    const cur=items.find(x=>x.id===id);if(cur&&!pending[id]){cur.qty=Number(data);cache();render();updateSheetQty(id)}
+  },500);
+}
+
+/* ---------- MHD-Logik ---------- */
+function daysLeft(it){
+  if(!it.mhd)return null;const [y,m,d]=it.mhd.split("-").map(Number);
+  const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(y,m-1,d)-t)/864e5);
+}
+function expiry(it){const d=daysLeft(it);if(d===null||it.qty<=0)return null;return d<0?"expired":d<=WARN_DAYS?"soon":"ok"}
+function mhdDate(it){const [y,m,d]=it.mhd.split("-");return `${d}.${m}.${y.slice(2)}`}
+function whenText(d){return d<-1?`seit ${-d} Tagen abgelaufen`:d===-1?"seit gestern abgelaufen":d===0?"läuft heute ab":d===1?"läuft morgen ab":`in ${d} Tagen`}
+const stock=it=>it.qty<=0?"out":(it.min>0&&it.qty<=it.min?"low":"ok");
+const fmt=n=>Number.isInteger(n)?String(n):String(n).replace(".",",");
+
+/* ---------- Anzeige ---------- */
+function render(){
+  const low=items.filter(i=>stock(i)!=="ok").length;
+  const exp=items.filter(i=>["soon","expired"].includes(expiry(i))).sort((a,b)=>daysLeft(a)-daysLeft(b));
+  $("#stats").innerHTML=`<span><b>${items.length}</b> Art.</span><span class="low"><b>${low}</b> knapp</span><span class="low"><b>${exp.length}</b> MHD</span>`;
+  const filters=["Alle","Knapp","Läuft ab",...PLACES.filter(p=>items.some(i=>i.place===p))];
+  if(!filters.includes(filter))filter="Alle";
+  $("#chips").innerHTML=filters.map(f=>`<button class="chip" aria-pressed="${f===filter}" data-f="${esc(f)}">${esc(f)}</button>`).join("");
+  let list=items.slice();const qq=q.trim().toLowerCase();
+  if(qq)list=list.filter(i=>i.name.toLowerCase().includes(qq)||i.barcode.includes(qq));
+  if(filter==="Knapp")list=list.filter(i=>stock(i)!=="ok");
+  else if(filter==="Läuft ab")list=list.filter(i=>["soon","expired"].includes(expiry(i)));
+  else if(filter!=="Alle")list=list.filter(i=>i.place===filter);
+  const m=$("#main");
+  const alertHTML=exp.length?`<section class="alert ${exp.some(i=>expiry(i)==="expired")?"crit":""}"><h2>${exp.length===1?"1 Artikel läuft":exp.length+" Artikel laufen"} bald ab</h2><ul>${exp.map(i=>`<li><button data-open="${esc(i.id)}"><span>${esc(i.name)}</span><span class="when ${expiry(i)}">${whenText(daysLeft(i))}</span></button></li>`).join("")}</ul></section>`:"";
+  if(!items.length){m.innerHTML=`<div class="group"><div class="list empty">Noch keine Artikel.<br>Scanne einen Barcode oder tippe auf <b>+ Artikel</b>.</div></div>`;return}
+  if(!list.length){m.innerHTML=alertHTML+`<div class="group"><div class="list empty">Nichts gefunden.</div></div>`;return}
+  const groups={};
+  list.sort((a,b)=>a.name.localeCompare(b.name,"de")).forEach(i=>(groups[i.place]??=[]).push(i));
+  m.innerHTML=alertHTML+PLACES.filter(p=>groups[p]).map(p=>`<section class="group"><h2><span>${esc(p)}</span><span>${groups[p].length}</span></h2><div class="list">${groups[p].map(rowHTML).join("")}</div></section>`).join("");
+}
+function rowHTML(i){
+  const s=stock(i),e=expiry(i);
+  const pill=s==="out"?`<span class="pill out">leer</span>`:s==="low"?`<span class="pill low">nachkaufen</span>`:"";
+  const mhd=i.mhd?(e==="expired"?`<span class="pill expired">abgelaufen ${mhdDate(i)}</span>`:e==="soon"?`<span class="pill soon">MHD ${mhdDate(i)}</span>`:`<span>MHD ${mhdDate(i)}</span>`):"";
+  const rs=e==="expired"?"out":(e==="soon"&&s==="ok")?"low":s;
+  return `<div class="row ${rs}" data-id="${esc(i.id)}"><span class="stripe"></span>
+  <button class="info" data-act="open"><div class="name">${esc(i.name)}</div><div class="meta">${pill}${mhd}${i.barcode?`<span class="code">${esc(i.barcode)}</span>`:""}</div></button>
+  <div class="stepper"><button data-act="dec" aria-label="${esc(i.name)} verbrauchen">−</button><div class="qty">${fmt(i.qty)}<small>${esc(i.unit)}</small></div><button data-act="inc" aria-label="${esc(i.name)} hinzufügen">+</button></div></div>`;
+}
+
+/* ---------- Fenster ---------- */
+function close(){$("#layer").innerHTML=""}
+function sheet(html){
+  $("#layer").innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  $("#scrim").addEventListener("click",e=>{if(e.target.id==="scrim")close()});
+}
+function updateSheetQty(id){const el=$("#sQty");if(el&&el.dataset.id===id){const c=items.find(x=>x.id===id);el.innerHTML=`${fmt(c.qty)}<small>${esc(c.unit)}</small>`}}
+function openItem(id,fromScan){
+  const it=items.find(x=>x.id===id);if(!it)return;
+  sheet(`<h3>${esc(it.name)}</h3>
+  ${fromScan?`<div class="status">Schon im Bestand – Menge anpassen.</div>`:""}
+  ${it.mhd?`<p class="note">MHD ${mhdDate(it)}${expiry(it)&&expiry(it)!=="ok"?" · "+whenText(daysLeft(it)):""}</p>`:""}
+  <div class="big-step stepper"><button id="sDec" aria-label="weniger">−</button><div class="qty" id="sQty" data-id="${esc(id)}">${fmt(it.qty)}<small>${esc(it.unit)}</small></div><button id="sInc" aria-label="mehr">+</button></div>
+  <div class="actions"><button class="btn" id="sEdit">Bearbeiten</button><button class="btn primary" id="sDone">Fertig</button></div>`);
+  $("#sDec").onclick=()=>{bump(id,-1);updateSheetQty(id)};
+  $("#sInc").onclick=()=>{bump(id,1);updateSheetQty(id)};
+  $("#sDone").onclick=close;
+  $("#sEdit").onclick=()=>editForm(items.find(x=>x.id===id));
+}
+function editForm(it,note){
+  const isNew=!it||!it.id;it=it||{};
+  sheet(`<h3>${isNew?"Neuer Artikel":"Artikel bearbeiten"}</h3>
+  ${note?`<div class="status ${note.err?"err":""}">${esc(note.text)}</div>`:""}
+  <form id="f" style="display:grid;gap:12px">
+    <div class="field"><label for="fName">Name</label><input id="fName" required value="${esc(it.name)}" placeholder="z. B. Basmati-Reis 1 kg"></div>
+    <div class="field"><label for="fCode">Barcode (EAN)</label><input id="fCode" inputmode="numeric" value="${esc(it.barcode)}" placeholder="optional"></div>
+    <div class="three">
+      <div class="field"><label for="fQty">Bestand</label><input id="fQty" type="number" inputmode="decimal" step="any" min="0" value="${it.qty??1}"></div>
+      <div class="field"><label for="fMin">Mindestens</label><input id="fMin" type="number" inputmode="decimal" step="any" min="0" value="${it.min??1}"></div>
+      <div class="field"><label for="fUnit">Einheit</label><select id="fUnit">${UNITS.map(u=>`<option${u===(it.unit||"Stück")?" selected":""}>${u}</option>`).join("")}</select></div>
+    </div>
+    <div class="two">
+      <div class="field"><label for="fPlace">Lagerort</label><select id="fPlace">${PLACES.map(p=>`<option${p===(it.place||"Vorratsschrank")?" selected":""}>${p}</option>`).join("")}</select></div>
+      <div class="field"><label for="fMhd">MHD</label><input id="fMhd" type="date" value="${esc(it.mhd||"")}"></div>
+    </div>
+    <div class="actions">${isNew?"":`<button type="button" class="btn danger" id="fDel">Löschen</button>`}<button type="button" class="btn" id="fCancel">Abbrechen</button><button class="btn primary" id="fSave">Speichern</button></div>
+    <div id="delConfirm" hidden class="actions"><span class="note" style="flex-basis:100%">„${esc(it.name)}“ wirklich löschen?</span><button type="button" class="btn" id="fNo">Nein</button><button type="button" class="btn danger" id="fYes">Ja, löschen</button></div>
+  </form>`);
+  if(isNew&&!it.name)setTimeout(()=>$("#fName").focus(),60);
+  $("#fCancel").onclick=close;
+  if(!isNew){
+    $("#fDel").onclick=()=>{$("#delConfirm").hidden=false};
+    $("#fNo").onclick=()=>{$("#delConfirm").hidden=true};
+    $("#fYes").onclick=()=>{close();deleteItem(it.id)};
+  }
+  $("#f").onsubmit=async e=>{
+    e.preventDefault();
+    const name=$("#fName").value.trim();if(!name)return;
+    const code=$("#fCode").value.replace(/\D/g,"");
+    if(code&&items.some(x=>x.barcode===code&&x.id!==it.id)){toast("Dieser Barcode gehört schon zu einem anderen Artikel");return}
+    $("#fSave").disabled=true;
+    const saved=await saveItem({id:it.id,name,barcode:code,qty:Math.max(0,Number($("#fQty").value)||0),min:Math.max(0,Number($("#fMin").value)||0),unit:$("#fUnit").value,place:$("#fPlace").value,mhd:$("#fMhd").value||""},isNew);
+    if(saved){close();toast(isNew?"Angelegt":"Gespeichert")}else $("#fSave").disabled=false;
+  };
+}
+
+/* ---------- Scanner ---------- */
+let scanControls=null;
+function stopScan(){try{scanControls&&scanControls.stop()}catch(e){}scanControls=null;const s=$("#scanner");s&&s.remove()}
+async function startScan(){
+  const el=document.createElement("div");el.className="scanner";el.id="scanner";
+  el.innerHTML=`<video id="vid" playsinline muted></video><div class="frame"></div>
+  <div class="bar"><p class="hint" id="scanHint">Barcode in den Rahmen halten</p>
+  <form class="manual" id="manual"><input id="manualCode" inputmode="numeric" placeholder="oder Nummer eintippen" aria-label="Barcode-Nummer"><button class="btn">OK</button></form>
+  <button class="btn close" id="scanClose">Schließen</button></div>`;
+  document.body.appendChild(el);
+  $("#scanClose").onclick=stopScan;
+  $("#manual").onsubmit=e=>{e.preventDefault();const c=$("#manualCode").value.replace(/\D/g,"");if(c.length>=6){stopScan();handleCode(c)}};
+  if(!window.ZXingBrowser){$("#scanHint").textContent="Scanner konnte nicht geladen werden. Nummer bitte eintippen.";return}
+  try{
+    const reader=new ZXingBrowser.BrowserMultiFormatReader();
+    let done=false;
+    scanControls=await reader.decodeFromConstraints({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}},$("#vid"),(result)=>{
+      if(result&&!done){done=true;navigator.vibrate&&navigator.vibrate(60);const t=result.getText();stopScan();handleCode(t)}
+    });
+  }catch(e){
+    $("#scanHint").textContent=e&&e.name==="NotAllowedError"?"Kamerazugriff wurde verweigert. In den Browser-Einstellungen erlauben oder Nummer eintippen.":"Kamera nicht verfügbar. Nummer bitte eintippen.";
+  }
+}
+async function lookupOFF(code){
+  const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
+  try{
+    const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_de,brands,quantity,categories_tags`,{signal:ctrl.signal});
+    if(!r.ok)return null;const j=await r.json();if(j.status!==1||!j.product)return null;
+    const p=j.product;const base=(p.product_name_de||p.product_name||"").trim();if(!base)return null;
+    const brand=(p.brands||"").split(",")[0].trim();
+    let name=base;if(brand&&!base.toLowerCase().includes(brand.toLowerCase()))name=brand+" "+name;
+    if(p.quantity&&!name.includes(p.quantity))name+=" "+p.quantity;
+    const cats=(p.categories_tags||[]).join(" ");
+    const place=/frozen|tiefk/.test(cats)?"Tiefkühler":/dairies|milk|cheese|yogurt|fresh|meat|chilled/.test(cats)?"Kühlschrank":/beverages|drinks|waters|juices/.test(cats)?"Getränke":/spices|condiments|herbs/.test(cats)?"Gewürze":"Vorratsschrank";
+    return {name,place};
+  }catch(e){return null}finally{clearTimeout(t)}
+}
+async function handleCode(code){
+  code=String(code).replace(/\D/g,"");
+  const hit=items.find(x=>x.barcode===code);
+  if(hit){openItem(hit.id,true);return}
+  sheet(`<h3>Neuer Barcode</h3><p class="note code-big">${esc(code)}</p><div class="status"><span class="spin"></span>Suche Produkt in Open Food Facts …</div>`);
+  const p=await lookupOFF(code);
+  if(p)editForm({name:p.name,barcode:code,place:p.place,qty:1,min:1},{text:"Gefunden in Open Food Facts – MHD eintragen und speichern."});
+  else editForm({barcode:code,qty:1,min:1},{text:"Produkt nicht in der Datenbank. Name bitte eintragen.",err:true});
+}
+
+/* ---------- Push ---------- */
+function b64ToUint8(b){const p="=".repeat((4-b.length%4)%4);const s=atob((b+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(s,c=>c.charCodeAt(0))}
+const pushReady=()=>"serviceWorker" in navigator&&"PushManager" in window&&CFG.VAPID_PUBLIC_KEY&&!CFG.VAPID_PUBLIC_KEY.startsWith("__");
+async function pushState(){
+  if(!pushReady())return "unsupported";
+  const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+  return sub?"on":"off";
+}
+async function enablePush(){
+  const perm=await Notification.requestPermission();
+  if(perm!=="granted"){toast("Benachrichtigungen wurden nicht erlaubt");return false}
+  const reg=await navigator.serviceWorker.ready;
+  const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8(CFG.VAPID_PUBLIC_KEY)});
+  const j=sub.toJSON();
+  const {error}=await sb.from("push_subs").upsert({endpoint:j.endpoint,household,sub:j});
+  if(error){toast("Anmeldung für Meldungen fehlgeschlagen");return false}
+  toast("MHD-Meldungen sind an");return true;
+}
+async function disablePush(){
+  const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();
+  if(sub){await sb.from("push_subs").delete().eq("endpoint",sub.endpoint);await sub.unsubscribe()}
+  toast("MHD-Meldungen sind aus");
+}
+
+/* ---------- Einstellungen ---------- */
+async function openMenu(){
+  const ps=await pushState().catch(()=>"unsupported");
+  const ios=/iphone|ipad/i.test(navigator.userAgent)&&!window.navigator.standalone;
+  sheet(`<h3>Einstellungen</h3>
+  <div class="field"><label>Haushalt teilen</label>
+  <p class="note">Wer diesen Link öffnet, sieht und bearbeitet denselben Bestand. Gib ihn nur Leuten aus deinem Haushalt.</p>
+  <div class="share" id="shareLink">${esc(shareLink())}</div>
+  <button class="btn" id="copyLink">Link kopieren</button></div>
+  <div class="field"><label>MHD-Meldungen aufs Handy</label>
+  ${ps==="unsupported"?`<p class="note">${ios?"Auf dem iPhone zuerst über Teilen → „Zum Home-Bildschirm“ installieren und die App von dort öffnen.":"Dieser Browser unterstützt keine Push-Meldungen, oder sie sind noch nicht eingerichtet (siehe Anleitung, Schritt 5)."}</p>`
+  :`<p class="note">Einmal täglich morgens, wenn etwas in den nächsten ${WARN_DAYS} Tagen abläuft.</p><button class="btn ${ps==="on"?"":"primary"}" id="pushToggle">${ps==="on"?"Meldungen ausschalten":"Meldungen einschalten"}</button>`}</div>
+  <div class="field"><label>Anderen Haushalt verwenden</label>
+  <button class="btn danger" id="leave">Diesen Haushalt auf diesem Gerät verlassen</button>
+  <div id="leaveConfirm" hidden class="actions"><span class="note" style="flex-basis:100%">Ohne den Link kommst du nicht mehr an diesen Bestand. Link vorher kopiert?</span><button class="btn" id="leaveNo">Abbrechen</button><button class="btn danger" id="leaveYes">Verlassen</button></div></div>
+  <button class="btn primary" id="mClose">Fertig</button>`);
+  $("#mClose").onclick=close;
+  $("#copyLink").onclick=async()=>{try{await navigator.clipboard.writeText(shareLink());toast("Link kopiert")}catch(e){const r=document.createRange();r.selectNodeContents($("#shareLink"));getSelection().removeAllRanges();getSelection().addRange(r);toast("Link markiert – jetzt kopieren")}};
+  const pt=$("#pushToggle");if(pt)pt.onclick=async()=>{pt.disabled=true;ps==="on"?await disablePush():await enablePush();openMenu()};
+  $("#leave").onclick=()=>{$("#leaveConfirm").hidden=false};
+  $("#leaveNo").onclick=()=>{$("#leaveConfirm").hidden=true};
+  $("#leaveYes").onclick=()=>{ls(LS_KEY,null);ls(LS_CACHE,null);location.reload()};
+}
+
+/* ---------- Ersteinrichtung ---------- */
+function showSetup(){
+  $("#dock").hidden=true;$("#q").hidden=true;$("#chips").hidden=true;$("#menuBtn").hidden=true;
+  if(!configured()){
+    $("#main").innerHTML=`<div class="setup"><div class="card"><h2>Noch nicht verbunden</h2><p class="note">In <b>config.js</b> fehlen noch die Supabase-Daten. Siehe ANLEITUNG.md, Schritt 2.</p></div></div>`;return;
+  }
+  $("#main").innerHTML=`<div class="setup">
+  <div class="card"><h2>Neuen Haushalt anlegen</h2><p class="note">Du bekommst danach einen Link, den du mit deinem Haushalt teilst.</p><button class="btn primary" id="newHH">Haushalt anlegen</button></div>
+  <div class="card"><h2>Einem Haushalt beitreten</h2><p class="note">Füge den Link ein, den du bekommen hast.</p><input id="joinLink" placeholder="https://…#k=…"><button class="btn" id="joinHH">Beitreten</button></div></div>`;
+  $("#newHH").onclick=()=>{ls(LS_KEY,randomKey());location.reload()};
+  $("#joinHH").onclick=()=>{const m=$("#joinLink").value.match(/k=([A-Za-z0-9_-]{20,})/);if(!m){toast("Das ist kein gültiger Haushalts-Link");return}ls(LS_KEY,m[1]);location.reload()};
+}
+
+/* ---------- Toast & Events ---------- */
+let tt;function toast(t){clearTimeout(tt);let el=$(".toast");if(!el){el=document.createElement("div");el.className="toast";el.setAttribute("role","status");document.body.appendChild(el)}el.textContent=t;tt=setTimeout(()=>el.remove(),2400)}
+$("#main").addEventListener("click",e=>{
+  const o=e.target.closest("[data-open]");if(o){openItem(o.dataset.open);return}
+  const b=e.target.closest("[data-act]");if(!b)return;const id=b.closest(".row").dataset.id;
+  if(b.dataset.act==="inc")bump(id,1);else if(b.dataset.act==="dec")bump(id,-1);else openItem(id);
+});
+$("#chips").addEventListener("click",e=>{const b=e.target.closest(".chip");if(b){filter=b.dataset.f;render()}});
+$("#q").addEventListener("input",e=>{q=e.target.value;render()});
+$("#addBtn").onclick=()=>editForm(null);
+$("#scanBtn").onclick=startScan;
+$("#menuBtn").onclick=openMenu;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){stopScan();close()}});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh()});
+
+/* ---------- Start ---------- */
+readHouseholdFromUrl();
+household=ls(LS_KEY);
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+if(!household||!configured()||!window.supabase){showSetup();if(configured()&&!window.supabase)toast("Keine Internetverbindung")}
+else{
+  connect();loadCache();render();setSync("Lade …");refresh();
+  setInterval(()=>{if(!document.hidden)refresh()},20000);
+  if(location.search.includes("filter=mhd")){filter="Läuft ab";render()}
+}
+</script>
+</body>
+</html>

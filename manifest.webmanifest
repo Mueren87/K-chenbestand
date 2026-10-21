@@ -1,0 +1,15 @@
+{
+  "name": "Küchenbestand",
+  "short_name": "Küche",
+  "description": "Vorrat per Barcode erfassen, Bestand zählen, MHD im Blick behalten.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#edf1ec",
+  "theme_color": "#2e6a3e",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
